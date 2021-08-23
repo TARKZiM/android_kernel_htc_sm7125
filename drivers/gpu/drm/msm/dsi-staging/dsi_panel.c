@@ -430,7 +430,8 @@ static int dsi_panel_set_pinctrl_state(struct dsi_panel *panel, bool enable)
 	return rc;
 }
 
-
+extern int gesture_dubbleclick_en;
+int vp_flag=0;
 static int dsi_panel_power_on(struct dsi_panel *panel)
 {
 	int rc = 0;
@@ -474,12 +475,16 @@ exit:
 static int dsi_panel_power_off(struct dsi_panel *panel)
 {
 	int rc = 0;
-
-	if (gpio_is_valid(panel->reset_config.disp_en_gpio))
+    pr_err("lcd power off begin\n");
+	if (gpio_is_valid(panel->reset_config.disp_en_gpio)){
 		gpio_set_value(panel->reset_config.disp_en_gpio, 0);
+	}
 
-	if (gpio_is_valid(panel->reset_config.reset_gpio))
-		gpio_set_value(panel->reset_config.reset_gpio, 0);
+	if (gpio_is_valid(panel->reset_config.reset_gpio)){
+	    if(!gesture_dubbleclick_en){
+		    gpio_set_value(panel->reset_config.reset_gpio, 0);
+		}
+	}
 
 	if (gpio_is_valid(panel->reset_config.lcd_mode_sel_gpio))
 		gpio_set_value(panel->reset_config.lcd_mode_sel_gpio, 0);
@@ -489,11 +494,14 @@ static int dsi_panel_power_off(struct dsi_panel *panel)
 		pr_err("[%s] failed set pinctrl state, rc=%d\n", panel->name,
 		       rc);
 	}
-
+    if(gesture_dubbleclick_en)
+		vp_flag=1;
+	else
+		vp_flag=0;
 	rc = dsi_pwr_enable_regulator(&panel->power_info, false);
 	if (rc)
 		pr_err("[%s] failed to enable vregs, rc=%d\n", panel->name, rc);
-
+    pr_err("lcd power off end \n");
 	return rc;
 }
 static int dsi_panel_tx_cmd_set(struct dsi_panel *panel,
@@ -686,10 +694,11 @@ int dsi_panel_set_backlight(struct dsi_panel *panel, u32 bl_lvl)
 	if (panel->host_config.ext_bridge_num)
 		return 0;
 
-	pr_debug("backlight type:%d lvl:%d\n", bl->type, bl_lvl);
+	pr_err("backlight type:%d lvl:%d\n", bl->type, bl_lvl);
 	switch (bl->type) {
 	case DSI_BACKLIGHT_WLED:
 		rc = backlight_device_set_brightness(bl->raw_bd, bl_lvl);
+		pr_err("backlight type DSI_BACKLIGHT_WLED\n");
 		break;
 	case DSI_BACKLIGHT_DCS:
 		rc = dsi_panel_update_backlight(panel, bl_lvl);
@@ -3255,6 +3264,10 @@ end:
 	utils->node = panel->panel_of_node;
 }
 
+//BEGIN, Ontim,  wzx, 2020/03/16, St-result :PASS,add lcd information
+char lcd_info_pr[255] = {0};
+EXPORT_SYMBOL(lcd_info_pr);
+//END
 struct dsi_panel *dsi_panel_get(struct device *parent,
 				struct device_node *of_node,
 				struct device_node *parser_node,
@@ -3265,7 +3278,7 @@ struct dsi_panel *dsi_panel_get(struct device *parent,
 	struct dsi_parser_utils *utils;
 	const char *panel_physical_type;
 	int rc = 0;
-
+    int len = 0;
 	panel = kzalloc(sizeof(*panel), GFP_KERNEL);
 	if (!panel)
 		return ERR_PTR(-ENOMEM);
@@ -3285,6 +3298,7 @@ struct dsi_panel *dsi_panel_get(struct device *parent,
 	/*
 	 * Set panel type to LCD as default.
 	 */
+
 	panel->panel_type = DSI_DISPLAY_PANEL_TYPE_LCD;
 	panel_physical_type  = utils->get_property(utils->data,
 				"qcom,mdss-dsi-panel-physical-type", NULL);
@@ -3368,7 +3382,10 @@ struct dsi_panel *dsi_panel_get(struct device *parent,
 	panel->power_mode = SDE_MODE_DPMS_OFF;
 	drm_panel_init(&panel->drm_panel);
 	mutex_init(&panel->panel_lock);
-
+	strlcpy(lcd_info_pr,panel->name,strlen(panel->name));
+	len = strlen(panel->name);
+	pr_err("[%s]:wzx panel->name = %s,lcd_info = %s, %d\n",__func__,panel->name,lcd_info_pr,len);
+    pr_err("panel-name2=%s,%s:%d\n",panel->name, __func__, __LINE__);
 	return panel;
 error:
 	kfree(panel);

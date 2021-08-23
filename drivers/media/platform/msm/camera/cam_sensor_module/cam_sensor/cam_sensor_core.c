@@ -18,7 +18,9 @@
 #include "cam_trace.h"
 #include "cam_common_util.h"
 #include "cam_packet_util.h"
-
+#if 1
+#include "cam_sensor_efuse_id.h"
+#endif
 
 static void cam_sensor_update_req_mgr(
 	struct cam_sensor_ctrl_t *s_ctrl,
@@ -619,7 +621,7 @@ void cam_sensor_shutdown(struct cam_sensor_ctrl_t *s_ctrl)
 int cam_sensor_match_id(struct cam_sensor_ctrl_t *s_ctrl)
 {
 	int rc = 0;
-	uint32_t chipid = 0;
+	uint32_t chipid = 0, chipid_2 = 0;
 	struct cam_camera_slave_info *slave_info;
 
 	slave_info = &(s_ctrl->sensordata->slave_info);
@@ -629,20 +631,54 @@ int cam_sensor_match_id(struct cam_sensor_ctrl_t *s_ctrl)
 			 slave_info);
 		return -EINVAL;
 	}
-
-	rc = camera_io_dev_read(
-		&(s_ctrl->io_master_info),
-		slave_info->sensor_id_reg_addr,
-		&chipid, CAMERA_SENSOR_I2C_TYPE_WORD,
-		CAMERA_SENSOR_I2C_TYPE_WORD);
-
-	CAM_DBG(CAM_SENSOR, "read id: 0x%x expected id 0x%x:",
+	CAM_INFO(CAM_SENSOR,
+			"Match ID ,slot:%d, sensor_id_reg_addr: 0x%x,  slave_addr:0x%x,sensor_id:0x%x",
+			s_ctrl->soc_info.index,
+			s_ctrl->sensordata->slave_info.sensor_id_reg_addr,
+			s_ctrl->sensordata->slave_info.sensor_slave_addr,
+			s_ctrl->sensordata->slave_info.sensor_id);
+       if ((0x2e == s_ctrl->sensordata->slave_info.sensor_slave_addr) || (0x02e0 == s_ctrl->sensordata->slave_info.sensor_id))
+       	{//gc2375h gc02m1b
+	    rc = camera_io_dev_read(
+		    &(s_ctrl->io_master_info),
+		    slave_info->sensor_id_reg_addr,
+		    &chipid, CAMERA_SENSOR_I2C_TYPE_BYTE,
+		    CAMERA_SENSOR_I2C_TYPE_BYTE);
+	            CAM_INFO(CAM_SENSOR, "gc2375h or gc02m1b read id: 0x%x expected id 0x%x:",
 			 chipid, slave_info->sensor_id);
+	    rc = camera_io_dev_read(
+		    &(s_ctrl->io_master_info),
+		    0xf1,
+		    &chipid_2, CAMERA_SENSOR_I2C_TYPE_BYTE,
+		    CAMERA_SENSOR_I2C_TYPE_BYTE);
+	            CAM_INFO(CAM_SENSOR, "gc2375h or gc02m1b read id: 0x%x expected id 0x%x:",
+			 chipid_2, slave_info->sensor_id);
+                   chipid = chipid<<8 | chipid_2;
+	            CAM_INFO(CAM_SENSOR, "gc2375h or gc02m1b read id: 0x%x expected id 0x%x:",
+			 chipid, slave_info->sensor_id);
+        }
+        else
+       	{
+	    rc = camera_io_dev_read(
+		    &(s_ctrl->io_master_info),
+		    slave_info->sensor_id_reg_addr,
+		    &chipid, CAMERA_SENSOR_I2C_TYPE_WORD,
+		    CAMERA_SENSOR_I2C_TYPE_WORD);
+	    CAM_INFO(CAM_SENSOR, "read id: 0x%x expected id 0x%x:",
+			 chipid, slave_info->sensor_id);
+        }
 	if (cam_sensor_id_by_mask(s_ctrl, chipid) != slave_info->sensor_id) {
-		CAM_ERR(CAM_SENSOR, "chip id %x does not match %x",
+		CAM_ERR(CAM_SENSOR, "read id: 0x%x expected id: 0x%x",
 				chipid, slave_info->sensor_id);
 		return -ENODEV;
 	}
+#if 1
+    rc = get_CameName_and_EfuseId(s_ctrl);
+    if (rc < 0) {
+        pr_err("%s:%d failed:  get CameName EfuseId error \n",
+            __func__, __LINE__);
+    }
+#endif    
 	return rc;
 }
 
@@ -687,6 +723,13 @@ int32_t cam_sensor_driver_cmd(struct cam_sensor_ctrl_t *s_ctrl,
 				 cmd->handle_type);
 			rc = -EINVAL;
 			goto release_mutex;
+		}
+
+        	rc = cam_read_board_id();
+		if (rc < 0) {
+			CAM_ERR(CAM_SENSOR,
+				"Fail in reading board id %d",
+				 rc);
 		}
 
 		/* Parse and fill vreg params for powerup settings */

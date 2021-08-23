@@ -290,7 +290,12 @@ static void msm_restart_prepare(const char *cmd)
 		if (get_dload_mode() ||
 			((cmd != NULL && cmd[0] != '\0') &&
 			!strcmp(cmd, "edl")))
-			need_warm_reset = true;
+ 	     		   #ifdef CONFIG_QCOM_DLOAD_MODE
+	                    need_warm_reset = true;
+	                   #else
+	                   need_warm_reset = false;
+	                   #endif
+
 	} else {
 		need_warm_reset = (get_dload_mode() ||
 				(cmd != NULL && cmd[0] != '\0'));

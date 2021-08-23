@@ -1268,6 +1268,10 @@ config TOUCHSCREEN_HIMAX_CHIPSET
 
 source "drivers/input/touchscreen/hxchipset/Kconfig"
 
+source "drivers/input/touchscreen/ilitek_touch/Kconfig"
+
+source "drivers/input/touchscreen/focaltech_touch_spi/Kconfig"
+
 config TOUCHSCREEN_SYNAPTICS_DSX
         bool "Synaptics DSX Touchscreen Driver"
         depends on I2C

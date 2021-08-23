@@ -129,6 +129,7 @@ error:
 /**
  * dsi_pwr_enable_vregs() - enable/disable regulators
  */
+ extern int vp_flag;
 static int dsi_pwr_enable_vregs(struct dsi_regulator_info *regs, bool enable)
 {
 	int rc = 0, i = 0;
@@ -138,6 +139,19 @@ static int dsi_pwr_enable_vregs(struct dsi_regulator_info *regs, bool enable)
 	if (enable) {
 		for (i = 0; i < regs->count; i++) {
 			vreg = &regs->vregs[i];
+
+            if ((vp_flag==1)&&strstr(regs->vregs[i].vreg_name,"vddio")){
+                    pr_err("------vddio----enable----\n");
+            continue;
+            }
+            if ((vp_flag==1)&&strstr(regs->vregs[i].vreg_name,"lab")){
+                    pr_err("------lab----enable----\n");
+             continue;
+            }
+            if ((vp_flag==1)&&strstr(regs->vregs[i].vreg_name,"ibb")){
+                    pr_err("------ibb-----enable---\n");
+            continue;
+		    }
 			if (vreg->pre_on_sleep)
 				msleep(vreg->pre_on_sleep);
 
@@ -172,6 +186,20 @@ static int dsi_pwr_enable_vregs(struct dsi_regulator_info *regs, bool enable)
 		}
 	} else {
 		for (i = (regs->count - 1); i >= 0; i--) {
+
+            if ((vp_flag==1)&&strstr(regs->vregs[i].vreg_name,"ibb")){
+                    pr_err("------ibb-----disable---\n");
+            continue;
+		    }
+
+            if ((vp_flag==1)&&strstr(regs->vregs[i].vreg_name,"lab")){
+                    pr_err("------lab----disable----\n");
+             continue;
+            }
+            if ((vp_flag==1)&&strstr(regs->vregs[i].vreg_name,"vddio")){
+                    pr_err("------vddio----disable----\n");
+            continue;
+            }
 			if (regs->vregs[i].pre_off_sleep)
 				msleep(regs->vregs[i].pre_off_sleep);
 

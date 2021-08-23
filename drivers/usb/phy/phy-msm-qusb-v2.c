@@ -454,9 +454,11 @@ static void qusb_phy_host_init(struct usb_phy *phy)
 		qphy->tune_val = readb_relaxed(qphy->base +
 					qphy->phy_reg[PORT_TUNE1]);
 	}
-
+	
+#if 0
 	writel_relaxed(qphy->tune_val | BIT(7),
 		qphy->base + qphy->phy_reg[PORT_TUNE1]);
+#endif
 	pr_debug("%s(): Programming TUNE1 parameter as:%x\n",
 		__func__, readb_relaxed(qphy->base +
 					qphy->phy_reg[PORT_TUNE1]));
@@ -547,8 +549,10 @@ static int qusb_phy_init(struct usb_phy *phy)
 
 		pr_debug("%s(): Programming TUNE1 parameter as:%x\n", __func__,
 				qphy->tune_val);
+#if 0
 		writel_relaxed(qphy->tune_val,
 				qphy->base + qphy->phy_reg[PORT_TUNE1]);
+#endif
 	}
 
 	/* if debugfs based tunex params are set, use that value. */

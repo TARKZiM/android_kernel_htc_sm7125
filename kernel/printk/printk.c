@@ -51,6 +51,8 @@
 
 #include <linux/uaccess.h>
 #include <asm/sections.h>
+#include <linux/rtc.h>
+#include <linux/time.h>
 
 #define CREATE_TRACE_POINTS
 #include <trace/events/printk.h>
@@ -59,6 +61,8 @@
 #include "braille.h"
 #include "internal.h"
 
+bool qcom_rtc_state;
+EXPORT_SYMBOL(qcom_rtc_state);
 #ifdef CONFIG_EARLY_PRINTK_DIRECT
 extern void printascii(char *);
 #endif
@@ -1216,6 +1220,8 @@ module_param_named(time, printk_time, bool, S_IRUGO | S_IWUSR);
 static size_t print_time(u64 ts, char *buf)
 {
 	unsigned long rem_nsec;
+	struct timeval time = { 0 };
+	struct rtc_time tm;
 
 	if (!printk_time)
 		return 0;
@@ -1225,6 +1231,14 @@ static size_t print_time(u64 ts, char *buf)
 	if (!buf)
 		return snprintf(NULL, 0, "[%5lu.000000] ", (unsigned long)ts);
 
+	if (qcom_rtc_state) {
+		do_gettimeofday(&time);
+		time.tv_sec -= sys_tz.tz_minuteswest * 60;
+		rtc_time_to_tm(time.tv_sec, &tm);
+		return sprintf(buf,"[%d-%02d-%02d %02d:%02d:%02d.%u] ",tm.tm_year + 1900,
+				tm.tm_mon + 1,tm.tm_mday, tm.tm_hour, tm.tm_min,
+				tm.tm_sec, (unsigned int)time.tv_usec / 1000 );
+	}
 	return sprintf(buf, "[%5lu.%06lu] ",
 		       (unsigned long)ts, rem_nsec / 1000);
 }

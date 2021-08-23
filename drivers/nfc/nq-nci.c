@@ -29,6 +29,13 @@
 #include <linux/compat.h>
 #endif
 
+#include "ontim/ontim_dev_dgb.h"
+#define FPS_HW_INFO "NQ310"
+DEV_ATTR_DECLARE(nfcsensor)
+DEV_ATTR_DEFINE("vendor", FPS_HW_INFO)
+DEV_ATTR_DECLARE_END;
+ONTIM_DEBUG_DECLARE_AND_INIT(nfcsensor, nfcsensor, 8);
+
 struct nqx_platform_data {
 	unsigned int irq_gpio;
 	unsigned int en_gpio;
@@ -567,7 +574,7 @@ int nfc_ioctl_power_states(struct file *filp, unsigned long arg)
 		 * interrupts to avoid spurious notifications to upper
 		 * layers.
 		 */
-		nqx_disable_irq(nqx_dev);
+		//nqx_disable_irq(nqx_dev);
 		dev_dbg(&nqx_dev->client->dev,
 			"gpio_set_value disable: %s: info: %p\n",
 			__func__, nqx_dev);
@@ -1339,13 +1346,15 @@ static int nqx_probe(struct i2c_client *client,
 	 *
 	 */
 	r = nfcc_hw_check(client, nqx_dev);
+	dev_err(&client->dev, "%s:hw check, ret=%d\n", __func__, r);
+#if 0
 	if (r) {
 		/* make sure NFCC is not enabled */
 		gpio_set_value(platform_data->en_gpio, 0);
 		/* We don't think there is hardware switch NFC OFF */
 		goto err_request_hw_check_failed;
 	}
-
+#endif
 	/* Register reboot notifier here */
 	r = register_reboot_notifier(&nfcc_notifier);
 	if (r) {
@@ -1372,6 +1381,10 @@ static int nqx_probe(struct i2c_client *client,
 	device_set_wakeup_capable(&client->dev, true);
 	i2c_set_clientdata(client, nqx_dev);
 	nqx_dev->irq_wake_up = false;
+
+    dev_err(&client->dev, "%s: add nfc hwinfo\n", __func__);
+    CHECK_THIS_DEV_DEBUG_AREADY_EXIT();
+    REGISTER_AND_INIT_ONTIM_DEBUG_FOR_THIS_DEV();
 
 	dev_err(&client->dev,
 	"%s: probing NFCC NQxxx exited successfully\n",

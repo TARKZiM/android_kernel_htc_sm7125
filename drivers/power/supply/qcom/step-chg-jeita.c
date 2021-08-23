@@ -604,7 +604,7 @@ static int handle_step_chg_config(struct step_chg_info *chip)
 		vote(chip->fcc_votable, STEP_CHG_VOTER, true, fcc_ua);
 	}
 
-	pr_debug("%s = %d Step-FCC = %duA taper-fcc: %d\n",
+	pr_err("%s = %d Step-FCC = %duA taper-fcc: %d\n",
 		chip->step_chg_config->param.prop_name, pval.intval,
 		get_client_vote(chip->fcc_votable, STEP_CHG_VOTER),
 		chip->taper_fcc);
@@ -718,6 +718,10 @@ static int handle_jeita(struct step_chg_info *chip)
 
 set_jeita_fv:
 	vote(chip->fv_votable, JEITA_VOTER, fv_uv ? true : false, fv_uv);
+	//hzn add
+	power_supply_get_property(chip->batt_psy, POWER_SUPPLY_PROP_TEMP, &pval);
+	pr_err("%s = %d FCC = %duA FV = %duV\n",
+		chip->jeita_fcc_config->param.prop_name, pval.intval, fcc_ua, fv_uv);
 
 update_time:
 	chip->jeita_last_update_time = ktime_get();

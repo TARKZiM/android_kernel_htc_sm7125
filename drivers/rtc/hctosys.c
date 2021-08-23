@@ -24,6 +24,7 @@
  * the best guess is to add 0.5s.
  */
 
+extern bool qcom_rtc_state;
 static int __init rtc_hctosys(void)
 {
 	int err = -ENODEV;
@@ -57,7 +58,7 @@ static int __init rtc_hctosys(void)
 #endif
 
 	err = do_settimeofday64(&tv64);
-
+	qcom_rtc_state = true;
 	dev_info(rtc->dev.parent,
 		"setting system clock to "
 		"%d-%02d-%02d %02d:%02d:%02d UTC (%lld)\n",

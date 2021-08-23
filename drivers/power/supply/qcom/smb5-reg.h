@@ -340,6 +340,13 @@ enum {
  ********************************/
 #define TYPE_C_SNK_STATUS_REG			(TYPEC_BASE + 0x06)
 #define DETECTED_SRC_TYPE_MASK			GENMASK(6, 0)
+//hzn add for bug:420992
+#define SNK_RP_STD_DAM_BIT BIT(6)
+#define SNK_RP_1P5_DAM_BIT BIT(5)
+#define SNK_RP_3P0_DAM_BIT BIT(4)
+#define TYPE_C_DEBUG_ACCESS_SINK_REG (TYPEC_BASE + 0x4A)
+#define TYPEC_DEBUG_ACCESS_SINK_MASK GENMASK(4, 0)
+//add end
 #define SNK_DAM_500MA_BIT			BIT(6)
 #define SNK_DAM_1500MA_BIT			BIT(5)
 #define SNK_DAM_3000MA_BIT			BIT(4)

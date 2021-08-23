@@ -1015,6 +1015,10 @@ config REGULATOR_WM8994
 	  This driver provides support for the voltage regulators on the
 	  WM8994 CODEC.
 
+config REGULATOR_WL2864C
+	bool "Qualcomm Technologies Inc.  regulator driver"
+	default n
+
 config REGULATOR_CPR
 	bool "RBCPR regulator driver for APC"
 	depends on OF

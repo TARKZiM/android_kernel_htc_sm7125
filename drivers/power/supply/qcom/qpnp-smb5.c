@@ -2910,6 +2910,16 @@ static int smb5_init_hw(struct smb5 *chip)
 				rc);
 		return rc;
 	}
+	
+	//hzn add for bug:420992
+	rc = smblib_masked_write(chg, TYPE_C_DEBUG_ACCESS_SINK_REG, TYPEC_DEBUG_ACCESS_SINK_MASK, 0x17);
+	if (rc < 0) {
+		dev_err(chg->dev, "Couldn't configure 154a rc=%d\n", rc);
+		return rc;
+	}
+	smblib_read(chg, TYPE_C_DEBUG_ACCESS_SINK_REG, &val);
+	pr_err("hzn:154a = 0x%02x --------------------------\n", val);
+	//add end
 
 	if (chg->connector_pull_up != -EINVAL) {
 		rc = smb5_configure_internal_pull(chg, CONN_THERM,

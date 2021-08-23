@@ -426,6 +426,7 @@ static int cam_flash_ops(struct cam_flash_ctrl *flash_ctrl,
 	uint32_t curr = 0, max_current = 0;
 	struct cam_flash_private_soc *soc_private = NULL;
 	int i = 0;
+	int curr0 = 0;
 
 	if (!flash_ctrl || !flash_data) {
 		CAM_ERR(CAM_FLASH, "Fctrl or Data NULL");
@@ -445,7 +446,16 @@ static int cam_flash_ops(struct cam_flash_ctrl *flash_ctrl,
 				else
 					curr = max_current;
 			}
-			CAM_DBG(CAM_FLASH, "Led_Torch[%d]: Current: %d",
+			if (i == 0)
+			{
+				curr0 = curr;
+			}
+			if (i == 1)
+			{
+				curr = curr0;
+			}
+
+			CAM_ERR(CAM_FLASH, "Led_Torch[%d]: Current: %d",
 				i, curr);
 			cam_res_mgr_led_trigger_event(
 				flash_ctrl->torch_trigger[i], curr);
@@ -460,7 +470,16 @@ static int cam_flash_ops(struct cam_flash_ctrl *flash_ctrl,
 				else
 					curr = max_current;
 			}
-			CAM_DBG(CAM_FLASH, "LED_Flash[%d]: Current: %d",
+			if (i == 0)
+			{
+					curr0 = curr;
+			}
+			if (i == 1)
+			{
+					curr = curr0;
+			}
+
+			CAM_ERR(CAM_FLASH, "LED_Flash[%d]: Current: %d",
 				i, curr);
 			cam_res_mgr_led_trigger_event(
 				flash_ctrl->flash_trigger[i], curr);

@@ -21,6 +21,8 @@
 #define VALIDATE_VOLTAGE(min, max, config_val) ((config_val) && \
 	(config_val >= min) && (config_val <= max))
 
+extern char cam_board_id[64];
+
 static struct i2c_settings_list*
 	cam_sensor_get_i2c_ptr(struct i2c_settings_array *i2c_reg_settings,
 		uint32_t size)
@@ -1980,9 +1982,15 @@ int cam_sensor_util_power_down(struct cam_sensor_power_ctrl_t *ctrl,
 				(int) pd->config_val);
 
 			break;
+		case SENSOR_VIO:
+			CAM_DBG(CAM_SENSOR,"cam read :%s\n", cam_board_id);
+			if(cam_board_id[9] == '0')
+			{
+				CAM_ERR(CAM_SENSOR,"board id =0, do not power down VIO,returen! \n");
+				break;
+			}
 		case SENSOR_VANA:
 		case SENSOR_VDIG:
-		case SENSOR_VIO:
 		case SENSOR_VAF:
 		case SENSOR_VAF_PWDM:
 		case SENSOR_CUSTOM_REG1:

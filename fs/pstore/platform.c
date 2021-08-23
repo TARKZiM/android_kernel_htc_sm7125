@@ -82,8 +82,8 @@ static char *backend;
 #define WINDOW_BITS 12
 #define MEM_LEVEL 4
 static struct z_stream_s stream;
-#else
-static unsigned char *workspace;
+//#else
+//static unsigned char *workspace;
 #endif
 
 struct pstore_zbackend {
