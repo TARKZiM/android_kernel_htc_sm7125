@@ -25,6 +25,8 @@
 #include "wcd-mbhc-legacy.h"
 #include "wcd-mbhc-adc.h"
 #include <asoc/wcd-mbhc-v2-api.h>
+#include "wcd937x/wcd937x-registers.h"
+#include "wcd937x/internal.h"
 
 void wcd_mbhc_jack_report(struct wcd_mbhc *mbhc,
 			  struct snd_soc_jack *jack, int status, int mask)
@@ -547,6 +549,7 @@ void wcd_mbhc_report_plug(struct wcd_mbhc *mbhc, int insertion,
 				enum snd_jack_types jack_type)
 {
 	struct snd_soc_codec *codec = mbhc->codec;
+        struct wcd937x_priv *wcd937x = dev_get_drvdata(codec->dev);
 	bool is_pa_on = false;
 	u8 fsm_en = 0;
 
@@ -599,6 +602,7 @@ void wcd_mbhc_report_plug(struct wcd_mbhc *mbhc, int insertion,
 		hphlocp_off_report(mbhc, SND_JACK_OC_HPHL);
 		mbhc->current_plug = MBHC_PLUG_TYPE_NONE;
 		mbhc->force_linein = false;
+		regmap_update_bits(wcd937x->regmap,WCD937X_HPH_SURGE_HPHLR_SURGE_EN, 0xC0, 0xC0);
 	} else {
 		/*
 		 * Report removal of current jack type.
@@ -635,6 +639,7 @@ void wcd_mbhc_report_plug(struct wcd_mbhc *mbhc, int insertion,
 					 __func__, mbhc->hph_status);
 				wcd_mbhc_jack_report(mbhc, &mbhc->headset_jack,
 					0, WCD_MBHC_JACK_MASK);
+				regmap_update_bits(wcd937x->regmap,WCD937X_HPH_SURGE_HPHLR_SURGE_EN, 0xC0, 0xC0);
 			}
 			if (mbhc->hph_status == SND_JACK_LINEOUT) {
 
@@ -739,6 +744,7 @@ void wcd_mbhc_report_plug(struct wcd_mbhc *mbhc, int insertion,
 				    (mbhc->hph_status | SND_JACK_MECHANICAL),
 				    WCD_MBHC_JACK_MASK);
 		wcd_mbhc_clr_and_turnon_hph_padac(mbhc);
+		regmap_update_bits(wcd937x->regmap,WCD937X_HPH_SURGE_HPHLR_SURGE_EN, 0xC0, 0x00);
 	}
 	pr_debug("%s: leave hph_status %x\n", __func__, mbhc->hph_status);
 }

@@ -892,9 +892,9 @@ static struct wcd_mbhc_config wcd_mbhc_cfg = {
 	.swap_gnd_mic = NULL,
 	.hs_ext_micbias = true,
 	.key_code[0] = KEY_MEDIA,
-	.key_code[1] = KEY_VOICECOMMAND,
-	.key_code[2] = KEY_VOLUMEUP,
-	.key_code[3] = KEY_VOLUMEDOWN,
+	.key_code[1] = KEY_VOLUMEUP,/*KEY_VOICECOMMAND,*/
+	.key_code[2] = KEY_VOLUMEDOWN,/*KEY_VOLUMEUP,*/
+	.key_code[3] = 0,/*KEY_VOLUMEDOWN,*/
 	.key_code[4] = 0,
 	.key_code[5] = 0,
 	.key_code[6] = 0,
@@ -5478,13 +5478,13 @@ static void *def_wcd_mbhc_cal(void)
 		(sizeof(btn_cfg->_v_btn_low[0]) * btn_cfg->num_btn);
 
 	btn_high[0] = 75;
-	btn_high[1] = 150;
-	btn_high[2] = 237;
-	btn_high[3] = 500;
-	btn_high[4] = 500;
-	btn_high[5] = 500;
-	btn_high[6] = 500;
-	btn_high[7] = 500;
+	btn_high[1] = 225;//150;
+	btn_high[2] = 500;//237;
+	btn_high[3] = 600;//500;
+	btn_high[4] = 600;//500;
+	btn_high[5] = 600;//500;
+	btn_high[6] = 600;//500;
+	btn_high[7] = 600;//500;
 
 	return wcd_mbhc_cal;
 }
@@ -6134,6 +6134,39 @@ static struct snd_soc_dai_link msm_common_misc_fe_dai_links[] = {
 		.no_host_mode = SND_SOC_DAI_LINK_NO_HOST,
 		.ops = &msm_cdc_dma_be_ops,
 	},
+	{/* hw:x,40 */
+		.name = "Primary MI2S_TX Hostless",
+		.stream_name = "Primary MI2S_TX Hostless",
+		.cpu_dai_name = "PRI_MI2S_TX_HOSTLESS",
+		.platform_name = "msm-pcm-hostless",
+		.dynamic = 1,
+		.dpcm_capture = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.no_host_mode = SND_SOC_DAI_LINK_NO_HOST,
+		.ignore_suspend = 1,
+		/* this dainlink has playback support */
+		.ignore_pmdown_time = 1,
+		.codec_dai_name = "snd-soc-dummy-dai",
+		.codec_name = "snd-soc-dummy",
+	},
+	{/* hw:x,41 */
+		.name = "Primary MI2S_RX Hostless",
+		.stream_name = "Primary MI2S_RX Hostless",
+		.cpu_dai_name = "PRI_MI2S_RX_HOSTLESS",
+		.platform_name	= "msm-pcm-hostless",
+		.dynamic = 1,
+		.dpcm_playback = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.no_host_mode = SND_SOC_DAI_LINK_NO_HOST,
+		.ignore_suspend = 1,
+		 /* this dailink has playback support */
+		.ignore_pmdown_time = 1,
+		/* This dainlink has MI2S support */
+		.codec_dai_name = "snd-soc-dummy-dai",
+		.codec_name = "snd-soc-dummy",
+	},
 };
 
 static struct snd_soc_dai_link msm_common_be_dai_links[] = {
@@ -6581,15 +6614,28 @@ static struct snd_soc_dai_link ext_disp_be_dai_link[] = {
 		.ignore_suspend = 1,
 	},
 };
-
+#ifdef CONFIG_SND_SOC_AWINIC_AW882XX
+struct snd_soc_dai_link_component awinic_codecs[] = {
+	{
+		 .of_node = NULL,
+		 .dai_name = "aw882xx-aif",
+		 .name = "aw882xx_smartpa",
+	},
+};
+#endif
 static struct snd_soc_dai_link msm_mi2s_be_dai_links[] = {
 	{
 		.name = LPASS_BE_PRI_MI2S_RX,
 		.stream_name = "Primary MI2S Playback",
 		.cpu_dai_name = "msm-dai-q6-mi2s.0",
 		.platform_name = "msm-pcm-routing",
+#ifdef CONFIG_SND_SOC_AWINIC_AW882XX
+		.num_codecs = ARRAY_SIZE(awinic_codecs),
+		.codecs = awinic_codecs,
+#else
 		.codec_name = "msm-stub-codec.1",
 		.codec_dai_name = "msm-stub-rx",
+#endif
 		.no_pcm = 1,
 		.dpcm_playback = 1,
 		.id = MSM_BACKEND_DAI_PRI_MI2S_RX,
@@ -6603,8 +6649,13 @@ static struct snd_soc_dai_link msm_mi2s_be_dai_links[] = {
 		.stream_name = "Primary MI2S Capture",
 		.cpu_dai_name = "msm-dai-q6-mi2s.0",
 		.platform_name = "msm-pcm-routing",
+#ifdef CONFIG_SND_SOC_AWINIC_AW882XX
+		.num_codecs = ARRAY_SIZE(awinic_codecs),
+		.codecs = awinic_codecs,
+#else
 		.codec_name = "msm-stub-codec.1",
 		.codec_dai_name = "msm-stub-tx",
+#endif
 		.no_pcm = 1,
 		.dpcm_capture = 1,
 		.id = MSM_BACKEND_DAI_PRI_MI2S_TX,
@@ -7094,6 +7145,7 @@ static struct snd_soc_dai_link msm_va_cdc_dma_be_dai_links[] = {
 		.codec_dai_name = "va_macro_tx1",
 		.no_pcm = 1,
 		.dpcm_capture = 1,
+		.init = &msm_int_audrx_init,
 		.id = MSM_BACKEND_DAI_VA_CDC_DMA_TX_0,
 		.be_hw_params_fixup = msm_be_hw_params_fixup,
 		.ignore_suspend = 1,
@@ -7359,6 +7411,7 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 	u32 auxpcm_audio_intf = 0;
 	u32 val = 0;
 	u32 wcn_btfm_intf = 0;
+	u32 wsa_bolero_codec = 0;
 	const struct of_device_id *match;
 
 	match = of_match_node(kona_asoc_machine_of_match, dev->of_node);
@@ -7370,17 +7423,24 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 
 	if (!strcmp(match->data, "codec")) {
 		card = &snd_soc_card_kona_msm;
-
 		memcpy(msm_kona_dai_links + total_links,
-		       msm_common_dai_links,
-		       sizeof(msm_common_dai_links));
+		      msm_common_dai_links,
+		      sizeof(msm_common_dai_links));
 		total_links += ARRAY_SIZE(msm_common_dai_links);
-
-		memcpy(msm_kona_dai_links + total_links,
-		       msm_bolero_fe_dai_links,
-		       sizeof(msm_bolero_fe_dai_links));
-		total_links +=
-			ARRAY_SIZE(msm_bolero_fe_dai_links);
+		rc = of_property_read_u32(dev->of_node, "qcom,wsa-bolero-codec",
+		 &wsa_bolero_codec);
+		 if (rc) {
+			dev_dbg(dev, "%s: No DT match WSA Macro codec\n",__func__);
+		 } else {
+		 if (wsa_bolero_codec) {
+				dev_dbg(dev, "%s(): WSA macro in bolero codec present\n",__func__);
+				memcpy(msm_kona_dai_links + total_links,
+			       msm_bolero_fe_dai_links,
+				       sizeof(msm_bolero_fe_dai_links));
+				total_links +=
+					ARRAY_SIZE(msm_bolero_fe_dai_links);
+		}
+	 }
 
 		memcpy(msm_kona_dai_links + total_links,
 		       msm_common_misc_fe_dai_links,
@@ -7392,11 +7452,14 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 		       sizeof(msm_common_be_dai_links));
 		total_links += ARRAY_SIZE(msm_common_be_dai_links);
 
-		memcpy(msm_kona_dai_links + total_links,
-		       msm_wsa_cdc_dma_be_dai_links,
-		       sizeof(msm_wsa_cdc_dma_be_dai_links));
-		total_links +=
-			ARRAY_SIZE(msm_wsa_cdc_dma_be_dai_links);
+		if (wsa_bolero_codec) {
+			 dev_dbg(dev, "%s(): WSAmacro in bolero codec present\n",__func__);
+			memcpy(msm_kona_dai_links + total_links,
+			       msm_wsa_cdc_dma_be_dai_links,
+			       sizeof(msm_wsa_cdc_dma_be_dai_links));
+			total_links +=
+				ARRAY_SIZE(msm_wsa_cdc_dma_be_dai_links);
+		}
 
 		memcpy(msm_kona_dai_links + total_links,
 		       msm_rx_tx_cdc_dma_be_dai_links,

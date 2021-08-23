@@ -47,6 +47,10 @@ DLKM_DIR := $(TOP)/device/qcom/common/dlkm
 # This is set once per LOCAL_PATH, not per (kernel) module
 KBUILD_OPTIONS := AUDIO_ROOT=$(AUDIO_BLD_DIR)
 
+ifeq ($(PRODUCT_AUDIO_AW882XX), yes)
+KBUILD_OPTIONS += SND_SOC_SMARTPA_AW882XX=m
+endif
+
 # We are actually building audio.ko here, as per the
 # requirement we are specifying <chipset>_audio.ko as LOCAL_MODULE.
 # This means we need to rename the module to <chipset>_audio.ko

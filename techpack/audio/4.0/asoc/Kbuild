@@ -61,6 +61,10 @@ ifeq ($(KERNEL_BUILD), 0)
 	endif
 endif
 
+ifeq ($(SND_SOC_SMARTPA_AW882XX), m)
+EXTRA_CFLAGS += -DCONFIG_SND_SOC_AWINIC_AW882XX
+endif
+
 # As per target team, build is done as follows:
 # Defconfig : build with default flags
 # Slub      : defconfig  + CONFIG_SLUB_DEBUG := y +

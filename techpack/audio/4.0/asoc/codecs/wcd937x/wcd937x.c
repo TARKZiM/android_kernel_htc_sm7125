@@ -377,6 +377,7 @@ struct wcd937x_mbhc *wcd937x_soc_get_mbhc(struct snd_soc_codec *codec)
 }
 EXPORT_SYMBOL(wcd937x_soc_get_mbhc);
 
+
 static int wcd937x_codec_hphl_dac_event(struct snd_soc_dapm_widget *w,
 					struct snd_kcontrol *kcontrol,
 					int event)
@@ -450,6 +451,10 @@ static int wcd937x_codec_hphl_dac_event(struct snd_soc_dapm_widget *w,
 	return 0;
 }
 
+
+int is_hph_input = 0;
+EXPORT_SYMBOL_GPL(is_hph_input);
+
 static int wcd937x_codec_hphr_dac_event(struct snd_soc_dapm_widget *w,
 					struct snd_kcontrol *kcontrol,
 					int event)
@@ -463,6 +468,7 @@ static int wcd937x_codec_hphr_dac_event(struct snd_soc_dapm_widget *w,
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
+		regmap_update_bits(wcd937x->regmap,WCD937X_HPH_SURGE_HPHLR_SURGE_EN, 0xC0, 0xC0);
 		wcd937x_rx_clk_enable(codec);
 		snd_soc_update_bits(codec, WCD937X_DIGITAL_CDC_DIG_CLK_CTL,
 				    0x02, 0x02);
@@ -473,6 +479,7 @@ static int wcd937x_codec_hphr_dac_event(struct snd_soc_dapm_widget *w,
 		set_bit(HPH_COMP_DELAY, &wcd937x->status_mask);
 		break;
 	case SND_SOC_DAPM_POST_PMU:
+		regmap_update_bits(wcd937x->regmap,WCD937X_HPH_SURGE_HPHLR_SURGE_EN, 0xC0, 0xC0);
 		if (hph_mode == CLS_AB_HIFI || hph_mode == CLS_H_HIFI)
 			snd_soc_update_bits(codec,
 				WCD937X_HPH_NEW_INT_RDAC_HD2_CTL_R,
@@ -514,6 +521,11 @@ static int wcd937x_codec_hphr_dac_event(struct snd_soc_dapm_widget *w,
 				    0x02, 0x00);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
+		//mdelay(2000);
+		if(is_hph_input == 0){ /*haolei add stop output  &&  no input*/
+			regmap_update_bits(wcd937x->regmap,WCD937X_HPH_SURGE_HPHLR_SURGE_EN, 0xC0, 0x00);
+			dev_dbg(codec->dev, "haolei add for stop playback 222\n",__func__);
+		}
 		snd_soc_update_bits(codec,
 			WCD937X_HPH_NEW_INT_RDAC_HD2_CTL_R,
 			0x0F, 0x01);
@@ -1555,6 +1567,7 @@ static int __wcd937x_codec_enable_micbias(struct snd_soc_dapm_widget *w,
 					  int event)
 {
 	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
+	struct wcd937x_priv *wcd937x = snd_soc_codec_get_drvdata(codec);
 	int micb_num;
 
 	dev_dbg(codec->dev, "%s: wname: %s, event: %d\n",
@@ -1568,6 +1581,16 @@ static int __wcd937x_codec_enable_micbias(struct snd_soc_dapm_widget *w,
 		micb_num = MIC_BIAS_3;
 	else
 		return -EINVAL;
+
+
+	/*control 30e2 registers values by recording data stream of earphone*/
+	if(is_hph_input == 1){ /*recording and insert headphone*/
+		dev_dbg(codec->dev, "haolei add for start recording 222\n",__func__);
+		regmap_update_bits(wcd937x->regmap,WCD937X_HPH_SURGE_HPHLR_SURGE_EN, 0xC0, 0xC0);
+	}else if(is_hph_input == 0){ /*no recording and insert headphone*/
+		dev_dbg(codec->dev, "haolei add for stop recording 222\n",__func__);
+		regmap_update_bits(wcd937x->regmap,WCD937X_HPH_SURGE_HPHLR_SURGE_EN, 0xC0, 0x00);
+	}
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:

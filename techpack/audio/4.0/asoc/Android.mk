@@ -65,6 +65,9 @@ KBUILD_OPTIONS += MODNAME=platform_dlkm
 KBUILD_OPTIONS += BOARD_PLATFORM=$(TARGET_BOARD_PLATFORM)
 KBUILD_OPTIONS += $(AUDIO_SELECT)
 
+ifeq ($(PRODUCT_AUDIO_AW882XX), yes)
+KBUILD_OPTIONS += SND_SOC_SMARTPA_AW882XX=m
+endif
 ###########################################################
 include $(CLEAR_VARS)
 LOCAL_MODULE              := $(AUDIO_CHIPSET)_platform.ko
